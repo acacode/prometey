@@ -120,6 +120,12 @@ export const createTree = (treeData, pId) => {
 }
 
 export const createElement = (query, props) => {
+  // TODO: Не нужно генерить элемент, просто возвращать то что получил, а методы
+  // такие как render или Prometey.connect сами сделают все что нужно
+  return {
+    query,
+    props,
+  }
   if (_.isObject(query)) {
     const component = Prometey(query, props)
     let componentTreeData = component.render()

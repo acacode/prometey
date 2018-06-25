@@ -3,6 +3,10 @@ import Button from '../../Button'
 import './index.css'
 
 export default class Header {
+
+  constructor(lol1, lol2){
+    console.log(lol1, lol2)
+  }
   state = {
     buttonClicked: false,
   }
