@@ -49,6 +49,11 @@ const removeExistChilds = (childs, anotherChilds) => {
   )
 }
 
+/*
+
+oldTD = { childs: [ {data with eId} ... ]}
+newTD = { childs: [ {onlyData} ...]}
+*/
 const updateElement = (oldTD, newTD) => {
   if (!oldTD) {
     console.log('sss')
@@ -64,8 +69,11 @@ const updateElement = (oldTD, newTD) => {
     const newChildsCount = _.get(newTD, 'childs.length')
     if (oldChildsCount !== newChildsCount) {
       if (newChildsCount > oldChildsCount) {
-        _.each(removeExistChilds(newTD.childs, oldTD.childs), child => {
+        _.each(newTD.childs, (child, index) => {
           console.log('new child', child)
+          if(!oldTD.childs[index] || child.tag !== oldTD.childs[index].tag){
+            oldTD.childs[index] = aggregateTreeData(child, `${index}`, oldTD.eId)
+          }
         })
       } else {
         _.each(removeExistChilds(oldTD.childs, newTD.childs), child => {

@@ -25,7 +25,7 @@ export default class Header {
         element('h1', 'P'),
         element(
           'div.title',
-          commonMessage ? `rometey - ${commonMessage}` : 'rometey'
+          `rometey${commonMessage ? ` - ${commonMessage}` : ''}`
         ),
       ]),
       element('div.actions', [
