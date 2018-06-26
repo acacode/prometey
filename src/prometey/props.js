@@ -1,19 +1,5 @@
 import _ from 'lodash'
 
-const EVENTS_LIST =
-  '/cached/error/abort/load/beforeunload/unload/online/offline/focus/blur/open/' +
-  'message/error/close/pagehide/pageshow/popstate/animationstart/animationend/' +
-  'animationiteration/transitionstart/transitioncancel/transitionend/transitionrun/' +
-  'reset/submit/beforeprint/afterprint/compositionstart/compositionupdate/compositionend/' +
-  'fullscreenchange/fullscreenerror/resize/scroll/cut/copy/paste/keydown/keypress/keyup/mouseenter/' +
-  'mouseover/mousemove/mousedown/mouseup/auxclick/click/dblclick/contextmenu/wheel/mouseleave/mouseout/' +
-  'select/pointerlockchange/pointerlockerror/dragstart/drag/dragend/dragenter/dragover/dragleave/drop/' +
-  'durationchange/loadedmetadata/loadeddata/canplay/canplaythrough/ended/emptied/stalled/suspend/play/' +
-  'playing/pause/waiting/seeking/seeked/ratechange/timeupdate/volumechange/complete/audioprocess/loadstart/' +
-  'progress/error/timeout/abort/load/loadend/change/storage/checking/downloading/error/noupdate/obsolete/' +
-  'updateready/broadcast/CheckboxStateChange/hashchange/input/RadioStateChange/readystatechange/ValueChange/' +
-  'invalid/localized/message/message/message/open/show/'
-
 const getOnlyNewProps = (newProps, prevProps) =>
   prevProps
     ? _.reduce(
@@ -30,8 +16,13 @@ const getOnlyNewProps = (newProps, prevProps) =>
 
 const addPropsToElement = (element, props) =>
   _.each(props, (prop, propName) => {
-    if (propIsEvent(propName)) {
-      element.addEventListener(propName, prop)
+    if (typeof propName !== 'string') {
+      throw new Error('Name of prop should have string type')
+    }
+    if (typeof prop === 'function') {
+      element[propName.toLowerCase()] = prop
+      // element.addEventListener(propName, prop)
+      // element.addEventListener(propName, prop)
     } else {
       if (!_.isUndefined(prop)) {
         if (propName === 'value') {
@@ -43,14 +34,15 @@ const addPropsToElement = (element, props) =>
     }
   })
 
-const propIsEvent = propName => EVENTS_LIST.includes(`/${propName}/`)
-
-const removePropFromElement = (element, prop, name) =>
-  propIsEvent(name)
-    ? element.removeEventListener(name, prop)
-    : name === 'value'
-      ? (element.innerText = '')
-      : element.removeAttribute(name)
+const removePropFromElement = (element, prop, name) => {
+  if (typeof prop === 'function') {
+    element[name.toLowerCase()] = null
+  } else if (name === 'value') {
+    element.innerText = ''
+  } else {
+    element.removeAttribute(name)
+  }
+}
 
 export const updateElementByProps = (tag, element, newTD, oldTD) => {
   let newProps = newTD.props
@@ -71,7 +63,10 @@ export const updateElementByProps = (tag, element, newTD, oldTD) => {
           propName
         )
       } else {
-        if (!propIsEvent(propName) && newPropValue !== prevPropValue) {
+        if (
+          typeof newPropValue !== 'function' &&
+          newPropValue !== prevPropValue
+        ) {
           if (propName === 'value' && element.innerText !== newPropValue) {
             prevProps[propName] = element.innerText = newPropValue
           } else {

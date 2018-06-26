@@ -2,7 +2,8 @@ import { element } from '../../prometey'
 
 let counter = 0
 export default class Button {
-  handleButtonClick = () => {
+  handleButtonClick = e => {
+    console.log(e)
     console.log('clicked counter', counter++)
     this.props.onClick()
   }
@@ -11,7 +12,7 @@ export default class Button {
     const { label, useClick } = this.props
     return element('button.some-button', {
       value: label,
-      [useClick ? 'click' : 'mousedown']: this.handleButtonClick,
+      [useClick ? 'onClick' : 'onMouseDown']: this.handleButtonClick,
     })
   }
 }

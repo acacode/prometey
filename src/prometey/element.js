@@ -26,107 +26,6 @@ export const parseQuery = (queryString, classNames) => {
   }
 }
 
-// const generateElId = (pId, id) => `${pId}${id}`
-
-// const attachElementToTree = (treeData, eId) => {
-//   let treeEl = { ...treeData }
-//   if (!eId) {
-//     eId = `${JSDOMTree.push(treeEl) - 1}`
-//   }
-//   treeEl.eId = eId
-//   if (treeData.childs) {
-//     treeEl.childs = createTree(treeData.childs, eId)
-//   }
-//   return treeEl
-// }
-
-// const removeExistChilds = (childs, anotherChilds) => {
-//   return _.reduce(
-//     childs,
-//     (arr, child) => {
-//       if (_.find(anotherChilds, aC => aC.eId !== child.eId).length) {
-//         arr.push(child)
-//       }
-//       return arr
-//     },
-//     []
-//   )
-// }
-
-// /*
-
-// oldTD = { childs: [ {data with eId} ... ]}
-// newTD = { childs: [ {onlyData} ...]}
-// */
-// const updateElement = (oldTD, newTD) => {
-//   if (!oldTD) {
-//     console.log('sss')
-//   }
-//   const treeDOMel = getElementByEId(oldTD.eId)
-//   if (newTD.class !== oldTD.class) {
-//     treeDOMel.element.className = newTD.class
-//     oldTD.class = newTD.class
-//   }
-//   updateElementByProps(newTD.tag, treeDOMel.element, newTD, oldTD)
-//   if (newTD.childs) {
-//     const oldChildsCount = _.get(oldTD, 'childs.length')
-//     const newChildsCount = _.get(newTD, 'childs.length')
-//     if (oldChildsCount !== newChildsCount) {
-//       if (newChildsCount > oldChildsCount) {
-//         _.each(newTD.childs, (child, index) => {
-//           console.log('new child', child)
-//           if (!oldTD.childs[index] || child.tag !== oldTD.childs[index].tag) {
-//             oldTD.childs[index] = aggregateTreeData(
-//               child,
-//               `${index}`,
-//               oldTD.eId
-//             )
-//           }
-//         })
-//       } else {
-//         _.each(removeExistChilds(oldTD.childs, newTD.childs), child => {
-//           console.log('remove child', child)
-//         })
-//       }
-//     }
-//     _.each(newTD.childs, (child, index) =>
-//       updateElement(oldTD.childs[index], child)
-//     )
-//   }
-// }
-
-// const aggregateTreeData = (treeData, id, pId) => {
-//   const eId = pId && id && generateElId(pId, id)
-//   const treeEl = attachElementToTree(treeData, eId)
-//   if (treeEl.component) {
-//     let updaterTimer = null
-//     _.forEach(treeEl.component.state, (value, key) => {
-//       treeEl.component.state.watch(key, (key, value) => {
-//         if (updaterTimer !== null) {
-//           clearTimeout(updaterTimer)
-//         }
-//         updaterTimer = setTimeout(() => {
-//           updaterTimer = null
-//           updateElement(treeEl, treeEl.component.render())
-//         }, 0)
-//       })
-//     })
-//   }
-//   return treeEl
-// }
-
-// export const createTree = (treeData, pId) => {
-//   let data
-//   if (_.isArray(treeData)) {
-//     data = _.map(treeData, (element, id) =>
-//       aggregateTreeData(element, `${id}`, pId)
-//     )
-//   } else {
-//     data = [aggregateTreeData(treeData)]
-//   }
-//   return data
-// }
-
 const createPel = (data, index, component) => {
   const { query, props } = data
   data = { ...parseQuery(query, _.get(props, 'class')) }
@@ -168,10 +67,10 @@ const removeRemovedChilds = (curDel, curChilds, newChilds) => {
       curChilds,
       child => !_.find(newChilds, ch => ch.query === child.query)
     ),
-    (child, index) => {
+    child => {
       curDel.element.removeChild(child.element)
+      dElIndexes.push(child.index)
       child.element = null
-      dElIndexes.push(index)
     }
   )
   _.forEach(dElIndexes, index => {
@@ -193,8 +92,8 @@ const addNewChilds = (curDel, curChilds, newChilds) => {
           child.element.appendChild(child.element)
         )
       }
-      curDel.element.insertChildAtIndex(child.element, index)
-      curDel.childs.insert(index, child)
+      curDel.element.insertChildAtIndex(child.element, child.index)
+      curDel.childs.insert(child.index, child)
     }
   )
 }
@@ -209,6 +108,42 @@ const compareDels = (curDel, newDel) => {
     addNewChilds(curDel, curDel.childs, newDel.childs)
     if (!_.isEqual(curDel.props, newDel.props)) {
       console.log('diffe')
+      if (_.isObject(newDel.props)) {
+      } else {
+        const noChilds = !_.get(newDel.childs, 'length')
+        const newValue = newDel.props
+        const element = curDel.element
+        const { tag } = newDel
+        if (_.isUndefined(newValue) || _.isNull(newValue) || !newValue.length) {
+          if (
+            (tag === 'input' || tag === 'textarea') &&
+            element.value !== newValue
+          ) {
+            element.value = ''
+          } else if (tag === 'img') {
+            element.src = ''
+          } else if (noChilds) {
+            element.innerText = ''
+          }
+          if (curDel && noChilds) {
+            curDel.props = ''
+          }
+        } else {
+          if (
+            (tag === 'input' || tag === 'textarea') &&
+            element.value !== newValue
+          ) {
+            element.value = newValue
+          } else if (tag === 'img') {
+            element.src = newValue
+          } else {
+            element.innerText = newValue
+          }
+          if (curDel) {
+            curDel.props = newValue
+          }
+        }
+      }
     }
     _.forEach(curDel.childs, (curDelChild, index) => {
       if (curDelChild.component || newDel.childs[index].component) {

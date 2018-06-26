@@ -21,12 +21,12 @@ export default class Header {
     const { buttonClicked, commonMessage } = this.state
 
     return element('div.header', [
-      element('span', [
-        element('h1', 'P'),
-        element(
-          'div.title',
-          `rometey${commonMessage ? ` - ${commonMessage}` : ''}`
-        ),
+      element('div.logo', [
+        element('span.logo', [
+          element('h1', 'P'),
+          element('div.title', 'rometey'),
+        ]),
+        commonMessage && element('span.sub-message', ` - ${commonMessage}`),
       ]),
       element('div.actions', [
         buttonClicked && element('label.some-text', 'dynamic childs'),
