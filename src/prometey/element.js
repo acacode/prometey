@@ -19,7 +19,7 @@ export const parseQuery = (queryString, classNames) => {
   const [element, ...className] = query.split('.')
   const [tag, id] = element.split('#')
   return {
-    class: classes(className, classNames),
+    class: classes(_.split(className, ' '), _.split(classNames, ' ')),
     id,
     parent,
     tag,
@@ -134,10 +134,10 @@ const createPel = (data, index, component) => {
   data.index = index
   if (_.isArray(props)) {
     data.childs = _.compact([...props])
-    data.props = null
+    data.props = undefined
   } else if (_.isObject(props)) {
     if (_.isEmpty(props)) {
-      data.props = null
+      data.props = undefined
     }
     const childs = props.childs
     if (childs && childs.length) {
@@ -153,8 +153,8 @@ const createPel = (data, index, component) => {
   if (component) {
     data.component = {
       state: _.clone(component.state),
-      props: _.clone(component.props),
       render: component.render,
+      props: _.clone(component.props),
     }
   }
   return data
@@ -207,6 +207,9 @@ const compareDels = (curDel, newDel) => {
     }
     removeRemovedChilds(curDel, curDel.childs, newDel.childs)
     addNewChilds(curDel, curDel.childs, newDel.childs)
+    if (!_.isEqual(curDel.props, newDel.props)) {
+      console.log('diffe')
+    }
     _.forEach(curDel.childs, (curDelChild, index) => {
       if (curDelChild.component || newDel.childs[index].component) {
         updateComponent(curDelChild, newDel.childs[index].component)
@@ -218,7 +221,8 @@ const compareDels = (curDel, newDel) => {
 }
 
 const updateComponent = (dEl, component) => {
-  console.log(dEl, component)
+  // console.log(dEl, component)
+  console.log('dEl.component.props', dEl.component.props)
   const stateUpdated = !_.isEqual(dEl.component.state, component.state)
   const propsUpdated = !_.isEqual(dEl.component.props, component.props)
   if (stateUpdated) {

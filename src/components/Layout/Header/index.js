@@ -33,6 +33,7 @@ export default class Header {
         element(Button, {
           label: buttonClicked ? 'Clicked!!!' : 'Click me!',
           onClick: this.onClick,
+          useClick: true,
         }),
       ]),
     ])

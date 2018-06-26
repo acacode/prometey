@@ -16,5 +16,5 @@ export const classes = (...classes) => {
     }
   })
 
-  return _.uniq(classNames).join(' ')
+  return _.uniq(_.compact(classNames)).join(' ')
 }
