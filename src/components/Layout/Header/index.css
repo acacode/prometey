@@ -2,19 +2,19 @@
 
 .header {
     height: 70px;
-  display: flex;
-  padding: 30px 40px;
-  background: #8a90c8;
-  color: rgba(28, 30, 46, 0.23);
-  box-shadow: 0 18px 0px 5px rgba(138, 144, 200, 0.48), 0 34px 0px 5px rgba(138, 144, 200, 0.48), 0 47px 0px 5px rgba(138, 144, 200, 0.48);
-  text-shadow: -5px 4px #414563;
-  animation: text-shadow-translate 3s cubic-bezier(0.96, 0.02, 0.01, 0.99) infinite alternate;
-  /* animation: text-shadow-translate 3s cubic-bezier(1, -0.56, 0, 1.51) infinite alternate; */
+    display: flex;
+    padding: 30px 40px;
+    background: #8a90c8;
+    color: rgba(28, 30, 46, 0.23);
+    box-shadow: 0 18px 0px 5px rgba(138, 144, 200, 0.48), 0 34px 0px 5px rgba(138, 144, 200, 0.48), 0 47px 0px 5px rgba(138, 144, 200, 0.48);
     justify-content: space-between;
 }
 
-.header span {
+.header > span {
     display: flex;
+    text-shadow: -5px 4px #414563;
+    animation: text-shadow-translate 3s cubic-bezier(0.96, 0.02, 0.01, 0.99) infinite alternate;
+    /* animation: text-shadow-translate 3s cubic-bezier(1, -0.56, 0, 1.51) infinite alternate; */
 }
 .header h1 {
     margin: 0;
@@ -48,7 +48,10 @@
     }
 }
 
-
+label.some-text {
+    vertical-align: middle;
+    margin-right: 35px;
+}
 .some-button{
   width: 168px;
   height: 45px;

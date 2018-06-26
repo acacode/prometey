@@ -3,16 +3,12 @@ import Button from '../../Button'
 import './index.css'
 
 export default class Header {
-
-  constructor(lol1, lol2){
-    console.log(lol1, lol2)
-  }
   state = {
     buttonClicked: false,
   }
 
   onClick = () => {
-    console.log('from header')
+    // console.log('from header')
     this.state.buttonClicked = !this.state.buttonClicked
     if (this.state.buttonClicked) {
       this.state.commonMessage = 'it works!!!'
