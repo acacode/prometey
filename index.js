@@ -1,13 +1,13 @@
-import './extensions/Element.js'
-import './extensions/Array.js'
-import { Prometey } from './Prometey'
-import { createElement, createTree } from './element'
-import { createTag } from './createTag'
-import { attachToDOM } from './DOM'
+import './src/extensions/Element.js'
+import './src/extensions/Array.js'
+import { Prometey } from './src/Prometey'
+import { createElement, createTree } from './src/element'
+import { createTag } from './src/createTag'
+import { attachToDOM } from './src/DOM'
 
-export { classes } from './classes'
-export { createElement } from './element'
-export { createTag } from './createTag'
+export { classes } from './src/classes'
+export { createElement } from './src/element'
+export { createTag } from './src/createTag'
 
 /* ---- short keywords ---- */
 export const tag = createTag
