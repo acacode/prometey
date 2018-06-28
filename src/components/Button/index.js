@@ -1,10 +1,6 @@
-import { element } from '../../prometey'
+import { element } from 'prometey'
 
 export default class Button {
-  init(props) {
-    console.log('INIT EBAT', props)
-  }
-
   handleButtonClick = e => {
     this.props.onClick()
   }

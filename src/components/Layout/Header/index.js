@@ -1,4 +1,4 @@
-import { element } from '../../../prometey'
+import { element } from 'prometey'
 import Button from '../../Button'
 import './index.css'
 

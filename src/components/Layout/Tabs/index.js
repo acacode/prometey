@@ -1,4 +1,4 @@
-import { element } from '../../../prometey'
+import { element } from 'prometey'
 import _ from 'lodash'
 
 export default class Tabs {
