@@ -1,5 +1,9 @@
 # Prometey
-![logo](https://github.com/acacode/prometey/blob/master/logo_sketch.png?raw=true)
+
+<div align="center">
+  <img src="https://github.com/acacode/prometey/blob/master/logo_sketch.png?raw=true" width="220px" height="220px" />
+</div>
+
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/acacode/prometey/blob/master/LICENSE)
 ## Simple, Component-based, Lightweight DOM library
 
