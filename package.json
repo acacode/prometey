@@ -1,6 +1,6 @@
 {
   "name": "prometey",
-  "version": "0.0.1",
+  "version": "0.0.5-alpha",
   "description": "",
   "main": "index.js",
   "dependencies": {
@@ -41,8 +41,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "webpack-dev-server --mode development --progress --hot --open"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "acacode",
+  "license": "MIT",
   "babel": {
     "presets": [
       "env",
