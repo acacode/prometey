@@ -3,7 +3,17 @@ import { updateElementByProps } from './props'
 
 let PROMETEY_DOM = []
 
-export const attachToDOM = treeData => {
+export const attachToDOM = dEls => {
+  _.each(dEls, dEl => {
+    dEl.element = createDel(dEl)
+    if (dEl.childs && dEl.childs.length) {
+      attachToDOM(dEl.childs)
+      _.forEach(dEl.childs, child => dEl.element.appendChild(child.element))
+    }
+  })
+}
+
+export const createDel = treeData => {
   const { tag, id: elDOMid, parent, props } = treeData
 
   const element = document.createElement(tag)
@@ -30,7 +40,7 @@ export const createDOM = treeData =>
   _.reduce(
     treeData,
     (tree, data) => {
-      const element = attachToDOM(data)
+      const element = createDel(data)
       data = {
         childs: createDOM(data.childs),
         eId: data.eId,
