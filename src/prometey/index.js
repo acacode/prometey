@@ -23,8 +23,6 @@ let PrometeyTree = []
 Prometey.connect = tree => {
   const pelTree = createTree(tree)
   attachToDOM(pelTree)
-  console.log('delTree', pelTree)
-  // attachDOM(dEls)
   PrometeyTree.push(tree)
 }
 

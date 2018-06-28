@@ -1,10 +1,11 @@
 import { element } from '../../prometey'
 
-let counter = 0
 export default class Button {
+  init(props) {
+    console.log('INIT EBAT', props)
+  }
+
   handleButtonClick = e => {
-    console.log(e)
-    console.log('clicked counter', counter++)
     this.props.onClick()
   }
 

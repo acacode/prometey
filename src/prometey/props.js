@@ -1,6 +1,6 @@
 import _ from 'lodash'
 
-const getOnlyNewProps = (newProps, prevProps) =>
+export const getOnlyNewProps = (newProps, prevProps) =>
   prevProps
     ? _.reduce(
         newProps,
@@ -14,7 +14,7 @@ const getOnlyNewProps = (newProps, prevProps) =>
       )
     : newProps
 
-const addPropsToElement = (element, props) =>
+export const addPropsToElement = (element, props) =>
   _.each(props, (prop, propName) => {
     if (typeof propName !== 'string') {
       throw new Error('Name of prop should have string type')
@@ -34,7 +34,7 @@ const addPropsToElement = (element, props) =>
     }
   })
 
-const removePropFromElement = (element, prop, name) => {
+export const removePropFromElement = (element, prop, name) => {
   if (typeof prop === 'function') {
     element[name.toLowerCase()] = null
   } else if (name === 'value') {

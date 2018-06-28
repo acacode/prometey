@@ -1,8 +1,3 @@
-import _ from 'lodash'
-import { classes } from './classes'
-import { Prometey } from './Prometey'
-import { createDel, attachToDOM } from './DOM'
-
 /**
  *  **** keywords ****
  *  pEl = Prometey element . structure is = { query: (string|class) , props: (any|array|string|object)}
@@ -10,7 +5,26 @@ import { createDel, attachToDOM } from './DOM'
  *
  */
 
-export const parseQuery = (queryString, classNames) => {
+import _ from 'lodash'
+import { classes } from './classes'
+import { Prometey } from './Prometey'
+import {
+  removePropFromElement,
+  addPropsToElement,
+  getOnlyNewProps,
+} from './props'
+import { createDel, attachToDOM } from './DOM'
+
+/**
+ * Parse query selector to id, parent, tag, classNames information
+ * It needed for create pEl and dEl elements
+ *
+ *
+ * @param {string} queryString
+ * @param {(Array<string> | string)} classNames
+ * @returns {Object}
+ */
+const parseQuery = (queryString, classNames) => {
   let [parent, query] = queryString.split('->')
   if (!query) {
     query = parent
@@ -26,7 +40,7 @@ export const parseQuery = (queryString, classNames) => {
   }
 }
 
-const createPel = (data, index, component) => {
+const createPel = (data, index, component, parentUid) => {
   const { query, props } = data
   data = { ...parseQuery(query, _.get(props, 'class')) }
   data.query = query
@@ -46,8 +60,9 @@ const createPel = (data, index, component) => {
   } else {
     data.props = props
   }
+  data.uid = generateUid(data, index, parentUid)
   if (data.childs) {
-    data.childs = createTree(data.childs)
+    data.childs = createTree(data.childs, data.uid)
   }
   if (component) {
     data.component = {
@@ -65,7 +80,7 @@ const removeRemovedChilds = (curDel, curChilds, newChilds) => {
   _.forEach(
     _.filter(
       curChilds,
-      child => !_.find(newChilds, ch => ch.query === child.query)
+      child => !_.find(newChilds, ch => compareChilds(child, ch))
     ),
     child => {
       curDel.element.removeChild(child.element)
@@ -78,11 +93,13 @@ const removeRemovedChilds = (curDel, curChilds, newChilds) => {
   })
 }
 
+const compareChilds = (child, other) => other.uid === child.uid
+
 const addNewChilds = (curDel, curChilds, newChilds) => {
   _.forEach(
     _.filter(
       newChilds,
-      child => !_.find(curChilds, ch => ch.query === child.query)
+      child => !_.find(curChilds, ch => compareChilds(child, ch))
     ),
     (child, index) => {
       child.element = createDel(child)
@@ -98,7 +115,7 @@ const addNewChilds = (curDel, curChilds, newChilds) => {
   )
 }
 
-const compareDels = (curDel, newDel) => {
+const compareDels = (curDel, newDel, component) => {
   if (curDel.query === newDel.query) {
     if (curDel.class !== newDel.class) {
       curDel.element.className = newDel.class
@@ -107,12 +124,43 @@ const compareDels = (curDel, newDel) => {
     removeRemovedChilds(curDel, curDel.childs, newDel.childs)
     addNewChilds(curDel, curDel.childs, newDel.childs)
     if (!_.isEqual(curDel.props, newDel.props)) {
-      console.log('diffe')
+      if (component && component.beforeRender) {
+        component.beforeRender()
+      }
+      const element = curDel.element
       if (_.isObject(newDel.props)) {
+        const newProps = newDel.props
+        const prevProps = curDel.props
+        if (!_.isEmpty(newProps) && !_.isEmpty(prevProps)) {
+          addPropsToElement(element, getOnlyNewProps(newProps, prevProps))
+          _.each(prevProps, (prevPropValue, propName) => {
+            const newPropValue = newProps[propName]
+            if (_.isUndefined(newPropValue) || _.isNull(newPropValue)) {
+              prevProps[propName] = removePropFromElement(
+                element,
+                prevPropValue,
+                propName
+              )
+            } else {
+              if (typeof newPropValue === 'function') {
+                element[propName.toLowerCase()] = newPropValue
+              } else if (newPropValue !== prevPropValue) {
+                if (
+                  propName === 'value' &&
+                  element.innerText !== newPropValue
+                ) {
+                  prevProps[propName] = element.innerText = newPropValue
+                } else {
+                  element.setAttribute(propName, newPropValue)
+                  prevProps[propName] = newPropValue
+                }
+              }
+            }
+          })
+        }
       } else {
         const noChilds = !_.get(newDel.childs, 'length')
         const newValue = newDel.props
-        const element = curDel.element
         const { tag } = newDel
         if (_.isUndefined(newValue) || _.isNull(newValue) || !newValue.length) {
           if (
@@ -144,20 +192,35 @@ const compareDels = (curDel, newDel) => {
           }
         }
       }
-    }
-    _.forEach(curDel.childs, (curDelChild, index) => {
-      if (curDelChild.component || newDel.childs[index].component) {
-        updateComponent(curDelChild, newDel.childs[index].component)
-      } else {
-        compareDels(curDelChild, newDel.childs[index])
+      if (component && component.postRender) {
+        component.postRender()
       }
-    })
+    }
+    if (curDel.childs) {
+      for (let x = 0; x < curDel.childs.length; x++) {
+        const curDelChild = curDel.childs[x]
+        if (newDel.childs[x] === undefined) {
+          if (curDelChild.element !== null) {
+            curDel.element.removeChild(curDelChild.element)
+            curDelChild.element = null
+          }
+          curDel.childs.splice(x, 1)
+        } else {
+          if (
+            curDelChild.component &&
+            (newDel.childs[x] && newDel.childs[x].component)
+          ) {
+            updateComponent(curDelChild, newDel.childs[x].component, curDel.uid)
+          } else {
+            compareDels(curDelChild, newDel.childs[x])
+          }
+        }
+      }
+    }
   }
 }
 
-const updateComponent = (dEl, component) => {
-  // console.log(dEl, component)
-  console.log('dEl.component.props', dEl.component.props)
+const updateComponent = (dEl, component, parentUid) => {
   const stateUpdated = !_.isEqual(dEl.component.state, component.state)
   const propsUpdated = !_.isEqual(dEl.component.props, component.props)
   if (stateUpdated) {
@@ -168,90 +231,66 @@ const updateComponent = (dEl, component) => {
   }
 
   if (stateUpdated || propsUpdated) {
-    const newDel = createPel(component.render(), dEl.index, component)
-    compareDels(dEl, newDel)
+    const newDel = createPel(
+      component.render(),
+      dEl.index,
+      component,
+      parentUid
+    )
+    compareDels(dEl, newDel, component)
   }
 }
 
-let counter = 0
-const createComponentWatcher = (del, component) => {
+const createComponentWatcher = (del, component, parentUid) => {
   let updaterTimer = null
-  _.forEach(component.state, (value, key) => {
-    component.state.watch(key, (key, value) => {
+
+  const rawUpdate = component.setState
+
+  component.setState = stateData => {
+    const shouldUpdate = rawUpdate(stateData)
+    if (shouldUpdate) {
       clearTimeout(updaterTimer)
       updaterTimer = setTimeout(() => {
         updaterTimer = null
-        console.log('rerender ', counter++)
-        updateComponent(del, component)
+        updateComponent(del, component, parentUid)
       }, component.rerenderTimer)
-    })
-  })
+    }
+  }
 }
 
-const convertPelToDel = (pEl, index) => {
+const convertPelToDel = (pEl, index, parentUid) => {
   const { query, props } = pEl
   let del
   if (_.isObject(query)) {
     const component = Prometey(query, props)
     let componentPEl = component.render()
-    del = createPel(componentPEl, index, component)
-    createComponentWatcher(del, component)
+    del = createPel(componentPEl, index, component, parentUid)
+    createComponentWatcher(del, component, parentUid)
   } else {
-    del = createPel(pEl, index)
+    del = createPel(pEl, index, null, parentUid)
   }
-  // if (treeEl.component) {
-  //   let updaterTimer = null
-  //   _.forEach(treeEl.component.state, (value, key) => {
-  //     treeEl.component.state.watch(key, (key, value) => {
-  //       if (updaterTimer !== null) {
-  //         clearTimeout(updaterTimer)
-  //       }
-  //       updaterTimer = setTimeout(() => {
-  //         updaterTimer = null
-  //         updateElement(treeEl, treeEl.component.render())
-  //       }, 0)
-  //     })
-  //   })
-  // }
   return del
 }
 
-export const createTree = pEls => {
-  console.log('pEls', pEls)
+const generateUid = (pEl, index, parentUid) => {
+  return `${_.last(_.chunk(parentUid, 10)).join('')}${pEl.tag}${index}`
+}
+
+export const createTree = (pEls, parentUid = 'zero') => {
   let dEls
   if (_.isArray(pEls)) {
-    dEls = _.map(pEls, convertPelToDel)
+    dEls = _.map(pEls, (pEl, index) => {
+      return convertPelToDel(pEl, index, parentUid)
+    })
   } else {
-    dEls = [convertPelToDel(pEls, 0)]
+    dEls = [convertPelToDel(pEls, 0, parentUid)]
   }
   return dEls
 }
 
 export const createElement = (query, props) => {
-  // TODO: Не нужно генерить элемент, просто возвращать то что получил, а методы
-  // такие как render или Prometey.connect сами сделают все что нужно
   return {
     query,
     props,
   }
-  // if (_.isObject(query)) {
-  //   const component = Prometey(query, props)
-  //   let componentTreeData = component.render()
-  //   componentTreeData.component = component
-  //   return componentTreeData
-  // }
-
-  // let data = { ...parseQuery(query, _.get(props, 'class')) }
-  // if (_.isArray(props)) {
-  //   data.childs = _.compact([...props])
-  // } else if (_.isObject(props)) {
-  //   const childs = props.childs
-  //   if (childs && childs.length) {
-  //     data.childs = _.compact([...childs])
-  //   }
-  //   data.props = _.omit(props, ['childs', 'class'])
-  // } else {
-  //   data.props = props
-  // }
-  // return data
 }

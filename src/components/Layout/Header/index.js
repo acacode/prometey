@@ -5,20 +5,22 @@ import './index.css'
 export default class Header {
   state = {
     buttonClicked: false,
+    clickedCount: 0,
   }
 
   onClick = () => {
-    // console.log('from header')
-    this.state.buttonClicked = !this.state.buttonClicked
-    if (this.state.buttonClicked) {
-      this.state.commonMessage = 'it works!!!'
-    } else {
-      this.state.commonMessage = null
-    }
+    this.setState({
+      buttonClicked: !this.state.buttonClicked,
+      clickedCount: ++this.state.clickedCount,
+    })
+  }
+
+  beforeRender() {
+    console.log('aaa beforeRender(){')
   }
 
   render() {
-    const { buttonClicked, commonMessage } = this.state
+    const { buttonClicked, clickedCount } = this.state
 
     return element('div.header', [
       element('div.logo', [
@@ -26,7 +28,10 @@ export default class Header {
           element('h1', 'P'),
           element('div.title', 'rometey'),
         ]),
-        commonMessage && element('span.sub-message', ` - ${commonMessage}`),
+        element(
+          'span.sub-message',
+          clickedCount && `clicked count : ${clickedCount}`
+        ),
       ]),
       element('div.actions', [
         buttonClicked && element('label.some-text', 'dynamic childs'),
@@ -37,5 +42,9 @@ export default class Header {
         }),
       ]),
     ])
+  }
+
+  postRender() {
+    console.log('aaa postRender(){')
   }
 }
