@@ -1,4 +1,5 @@
-# Prometey 
+# Prometey
+![logo](https://github.com/acacode/prometey/blob/master/logo_sketch.png?raw=true)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/acacode/prometey/blob/master/LICENSE)
 ## Simple, Component-based, Lightweight DOM library
 
@@ -22,7 +23,7 @@ import Prometey, {
 
 ```
 
-`classes` -> `classes('some-class', ['class1', 'class2'], {super-class: true})`
+`classes` -> `classes('some-class', ['class1', 'class2'], { super-class: true })`
 
 `create`, `elem`, `element`, `createElement` - it is same functions, needed for create prometey-based elements.
 
@@ -58,8 +59,8 @@ in HTML:
 
 
 ## Some code samples
-![tree example](https://github.com/acacode/prometey/blob/master/scr1.png)
-![component example](https://github.com/acacode/prometey/blob/master/scr2.png)
+![tree example](https://github.com/acacode/prometey/blob/master/scr1.png?raw=true)
+![component example](https://raw.githubusercontent.com/acacode/prometey/master/scr2.png)
 ### [simple prometey project](https://github.com/js2me/prometey-example-app)
 
 ### License
