@@ -1,4 +1,3 @@
-import './polyfills/object.watch.js'
 import './extensions/Element.js'
 import './extensions/Array.js'
 import { Prometey } from './Prometey'

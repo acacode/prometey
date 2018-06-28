@@ -1,11 +1,8 @@
 import _ from 'lodash'
 
-let uid = 0
 export const Prometey = (Class, props) => {
   let context = new Class()
   context.props = props
-  context.__proto__.PROMETEY_ID = uid++ //eslint-disable-line
-  // TODO: WILL DO IT
   context.setState = stateData => {
     const keys = Object.keys(stateData)
     let shouldUpdate = false
@@ -21,7 +18,6 @@ export const Prometey = (Class, props) => {
   }
   if (context.rerenderTimer === undefined) {
     context.rerenderTimer = 10
-    // context.rerenderTimer = 189
   }
   const rawRender = context.render.bind(context)
   context.render = () => rawRender()
