@@ -76,14 +76,20 @@ const createPel = (data, index, component, parentUid) => {
 
 const removeRemovedChilds = (curDel, curChilds, newChilds) => {
   const dElIndexes = []
-
+  // curDel.childs = []
+  // curDel.element.innerHTML = ''
   _.forEach(
     _.filter(
       curChilds,
       child => !_.find(newChilds, ch => compareChilds(child, ch))
     ),
     child => {
-      curDel.element.removeChild(child.element)
+      const parentHTML = _.get(child.element, 'parentElement.innerHTML', null)
+      if (curDel.element.innerHTML === parentHTML) {
+        curDel.element.removeChild(child.element)
+      } else if (parentHTML !== null) {
+        child.element.parentElement.removeChild(child.element)
+      }
       dElIndexes.push(child.index)
       child.element = null
     }
@@ -96,6 +102,18 @@ const removeRemovedChilds = (curDel, curChilds, newChilds) => {
 const compareChilds = (child, other) => other.uid === child.uid
 
 const addNewChilds = (curDel, curChilds, newChilds) => {
+  // _.forEach(newChilds, child => {
+  //   child.element = createDel(child)
+  //   if (child.childs && child.childs.length) {
+  //     attachToDOM(child.childs)
+  //     _.forEach(child.childs, subChild => {
+  //       console.log('subChild.element.innerHTML', subChild.element.innerHTML)
+  //       child.element.appendChild(subChild.element)
+  //     })
+  //   }
+  //   curDel.element.insertChildAtIndex(child.element, child.index)
+  //   curDel.childs.insert(child.index, child)
+  // })
   _.forEach(
     _.filter(
       newChilds,
@@ -169,6 +187,14 @@ const compareDels = (curDel, newDel, component, parentDel) => {
   }
   removeRemovedChilds(curDel, curDel.childs, newDel.childs)
   addNewChilds(curDel, curDel.childs, newDel.childs)
+  if (_.isString(curDel.props) && !newDel.props) {
+    curDel.element.innerHTML = curDel.element.innerHTML.replace(
+      `<!-- uid-${curDel.uid}-text --> ${curDel.props} <!-- uid-${
+        curDel.uid
+      }-text -->`,
+      ''
+    )
+  }
   if (!_.isEqual(curDel.props, newDel.props)) {
     if (component && component.beforeRender) {
       component.beforeRender()

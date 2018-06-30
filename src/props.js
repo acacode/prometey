@@ -14,7 +14,7 @@ export const getOnlyNewProps = (newProps, prevProps) =>
       )
     : newProps
 
-export const addPropsToElement = (element, props) =>
+export const addPropsToElement = (element, props, uid) =>
   _.each(props, (prop, propName) => {
     if (typeof propName !== 'string') {
       throw new Error('Name of prop should have string type')
@@ -27,7 +27,9 @@ export const addPropsToElement = (element, props) =>
     } else {
       if (!_.isUndefined(prop)) {
         if (propName === 'value') {
-          element.innerText = prop
+          console.log('ГОВНО ', prop)
+          element.innerHTML = `<!-- uid-${uid}-text --> ${prop} <!-- uid-${uid}-text -->`
+          // element.innerText = prop
         } else {
           element.setAttribute(propName, prop)
         }
@@ -61,7 +63,7 @@ export const updateElementByProps = (tag, element, newTD, oldTD) => {
     if (_.isEmpty(newProps) && _.isEmpty(prevProps)) {
       return
     }
-    addPropsToElement(element, getOnlyNewProps(newProps, prevProps))
+    addPropsToElement(element, getOnlyNewProps(newProps, prevProps), newTD.uid)
     _.each(prevProps, (prevPropValue, propName) => {
       const newPropValue = newProps[propName]
       if (_.isUndefined(newPropValue) || _.isNull(newPropValue)) {
@@ -76,7 +78,10 @@ export const updateElementByProps = (tag, element, newTD, oldTD) => {
           newPropValue !== prevPropValue
         ) {
           if (propName === 'value' && element.innerText !== newPropValue) {
-            prevProps[propName] = element.innerText = newPropValue
+            element.innerHTML = `<!-- uid-${
+              newTD.uid
+            }-text --> ${newPropValue} <!-- uid-${newTD.uid}-text -->`
+            prevProps[propName] = newPropValue
           } else {
             element.setAttribute(propName, newPropValue)
             prevProps[propName] = newPropValue
