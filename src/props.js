@@ -20,6 +20,7 @@ export const addPropsToElement = (element, props) =>
       throw new Error('Name of prop should have string type')
     }
     if (typeof prop === 'function') {
+      console.log('ssss', propName, prop)
       element[propName.toLowerCase()] = prop
       // element.addEventListener(propName, prop)
       // element.addEventListener(propName, prop)
@@ -35,10 +36,17 @@ export const addPropsToElement = (element, props) =>
   })
 
 export const removePropFromElement = (element, prop, name) => {
+  const tag = element.tagName.toLowerCase()
   if (typeof prop === 'function') {
     element[name.toLowerCase()] = null
   } else if (name === 'value') {
-    element.innerText = ''
+    if ((tag === 'input' || tag === 'textarea') && element.value !== '') {
+      element.value = ''
+    } else if (tag === 'img') {
+      element.src = ''
+    } else {
+      element.innerHTML = ''
+    }
   } else {
     element.removeAttribute(name)
   }
@@ -85,8 +93,8 @@ export const updateElementByProps = (tag, element, newTD, oldTD) => {
         element.value = ''
       } else if (tag === 'img') {
         element.src = ''
-      } else if (noChilds) {
-        element.innerText = ''
+      } else {
+        element.innerHTML = ''
       }
       if (oldTD && noChilds) {
         oldTD.props = ''
@@ -100,7 +108,9 @@ export const updateElementByProps = (tag, element, newTD, oldTD) => {
       } else if (tag === 'img') {
         element.src = newProps
       } else {
-        element.innerText = newProps
+        element.innerHTML = `<!-- uid-${
+          newTD.uid
+        }-text --> ${newProps} <!-- uid-${newTD.uid}-text -->`
       }
       if (oldTD) {
         oldTD.props = newProps
