@@ -563,18 +563,22 @@ const attachWatcherForComponentState = (
 }
 
 const updateComponent = (prometeyElement, component, parentUID) => {
+  // Сравниваем новой состояние со старым
   const stateUpdated = !_.isEqual(
     prometeyElement.component.state,
     component.state
   )
+  // Сравниваем новые свойства со старыми
   const propsUpdated = !_.isEqual(
     prometeyElement.component.props,
     component.props
   )
   if (stateUpdated) {
+    // Обновляем предыдущеее состояние текущего компонента
     prometeyElement.component.state = _.clone(component.state)
   }
   if (propsUpdated) {
+    // Обновляем предыдущие свойства текущего компонента
     prometeyElement.component.props = _.clone(component.props)
   }
 
