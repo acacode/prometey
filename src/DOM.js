@@ -1,65 +1,164 @@
 import _ from 'lodash'
-import { updateElementByProps } from './props'
+// import { updateElementByProps } from './props'
 
-let PROMETEY_DOM = []
-
-export const attachToDOM = dEls => {
-  _.each(dEls, dEl => {
-    dEl.element = createDel(dEl)
-    if (dEl.childs && dEl.childs.length) {
-      attachToDOM(dEl.childs)
-      _.forEach(dEl.childs, child => dEl.element.appendChild(child.element))
+export const createDOMElements = prometeyElements => {
+  _.each(prometeyElements, prometeyElement => {
+    prometeyElement.element = createDOMElement(prometeyElement)
+    if (prometeyElement.childs && prometeyElement.childs.length) {
+      createDOMElements(prometeyElement.childs)
+      _.forEach(prometeyElement.childs, child =>
+        prometeyElement.element.appendChild(child.element)
+      )
     }
   })
 }
-
-export const createDel = treeData => {
-  const { tag, id: elDOMid, parent, props } = treeData
+export const createDOMElement = prometeyElement => {
+  const { tag, id, parent, properties } = prometeyElement
 
   const element = document.createElement(tag)
-  if (treeData.class.length) {
-    element.className = treeData.class
+  if (prometeyElement.class.length) {
+    element.className = prometeyElement.class
   }
-  if (elDOMid) {
-    element.setAttribute('id', elDOMid)
+  if (id) {
+    element.setAttribute('id', id)
   }
-  if (!_.isUndefined(props)) {
-    updateElementByProps(tag, element, treeData)
+  if (!_.isUndefined(properties)) {
+    updateElement(tag, element, prometeyElement)
   }
 
   if (parent) {
-    const pEl = document.querySelector(parent)
-    if (!pEl) throw Error(`Element by query "${parent}" is not found`)
-    pEl.appendChild(element)
+    const parentElement = document.querySelector(parent)
+    if (parentElement) {
+      parentElement.appendChild(element)
+    } else {
+      console.error(`Element by query "${parent}" is not found`)
+    }
   }
   return element
 }
 
-export const createDOM = treeData =>
-  treeData &&
-  _.reduce(
-    treeData,
-    (tree, data) => {
-      const element = createDel(data)
-      data = {
-        childs: createDOM(data.childs),
-        eId: data.eId,
-        element,
+export const createDOMText = (PUID, value) =>
+  `<!--${PUID}-t--> ${value} <!--${PUID}-t-->`
+
+export const updateElement = (
+  tag,
+  element,
+  prometeyElement,
+  oldPrometeyElement
+) => {
+  let props = prometeyElement && prometeyElement.properties
+  if (!oldPrometeyElement) {
+    if (_.isObject(props)) {
+      _.forEach(props, (value, name) => {
+        addPropertyToElement(tag, element, value, name, prometeyElement.PUID)
+      })
+    } else {
+      addPrimitiveToElement(tag, element, props, prometeyElement.PUID)
+    }
+  } else {
+    let newProps = oldPrometeyElement.props
+    //   const noChilds = !_.get(oldPrometeyElement.childs, 'length')
+
+    if (_.isObject(newProps)) {
+      if (_.isEmpty(newProps) && _.isEmpty(props)) {
+        return
       }
-      _.forEach(data.childs, child => element.appendChild(child.element))
-      tree.push(data)
-      return tree
-    },
-    []
-  )
+      addPropsToElement(
+        element,
+        getOnlyNewProps(newProps, props),
+        oldPrometeyElement.uid
+      )
+      _.each(props, (prevPropValue, propName) => {
+        const newPropValue = newProps[propName]
+        if (_.isUndefined(newPropValue) || _.isNull(newPropValue)) {
+          props[propName] = removePropFromElement(
+            element,
+            prevPropValue,
+            propName
+          )
+        } else {
+          if (
+            typeof newPropValue !== 'function' &&
+            newPropValue !== prevPropValue
+          ) {
+            if (propName === 'value' && element.innerText !== newPropValue) {
+              element.innerHTML = createDOMText(
+                oldPrometeyElement.PUID,
+                newPropValue
+              )
+              props[propName] = newPropValue
+            } else {
+              element.setAttribute(propName, newPropValue)
+              props[propName] = newPropValue
+            }
+          }
+        }
+      })
+    } else {
+      if (_.isUndefined(newProps) || _.isNull(newProps) || !newProps.length) {
+        prometeyElement.properties = addPrimitiveToElement(tag, element, '')
+      } else if (newProps !== props) {
+        prometeyElement.properties = addPrimitiveToElement(
+          tag,
+          element,
+          newProps,
+          oldPrometeyElement.PUID
+        )
+      }
+    }
+  }
+}
 
-export const parseElId = eId =>
-  _.reduce(
-    eId.split(''),
-    (str, id, index) => str + (!index ? `[${index}]` : `childs[${id}]`),
-    ''
-  )
-
-export const getElementByEId = eId => eId && _.get(PROMETEY_DOM, parseElId(eId))
-
-export const attachDOM = dom => (PROMETEY_DOM = [...dom])
+const addPrimitiveToElement = (tag, element, value, PUID) => {
+  if ((tag === 'input' || tag === 'textarea') && element.value !== value) {
+    element.value = value
+  } else if (tag === 'img') {
+    element.src = value
+  } else {
+    element.innerHTML = value ? createDOMText(PUID, value) : value
+  }
+  return value
+}
+const addPropertyToElement = (tag, element, value, name, PUID) => {
+  if (typeof name !== 'string') {
+    console.error('Name of prop should have string type')
+    name = `${name}`
+  }
+  if (typeof value === 'function') {
+    element[name.toLowerCase()] = value
+  } else {
+    if (!_.isUndefined(value)) {
+      if (name === 'value') {
+        addPrimitiveToElement(tag, element, value, PUID)
+      } else {
+        element.setAttribute(name, value)
+      }
+    }
+  }
+}
+// const addPropertyToElement = (prevPropValue, propName) => {
+//     const newPropValue = newProps[propName]
+//     if (_.isUndefined(newPropValue) || _.isNull(newPropValue)) {
+//       prevProps[propName] = removePropFromElement(
+//         element,
+//         prevPropValue,
+//         propName
+//       )
+//     } else {
+//       if (
+//         typeof newPropValue !== 'function' &&
+//         newPropValue !== prevPropValue
+//       ) {
+//         if (propName === 'value' && element.innerText !== newPropValue) {
+//           element.innerHTML = createDOMText(
+//             newPrometeyElement.PUID,
+//             newPropValue
+//           )
+//           prevProps[propName] = newPropValue
+//         } else {
+//           element.setAttribute(propName, newPropValue)
+//           prevProps[propName] = newPropValue
+//         }
+//       }
+//     }
+//   }
