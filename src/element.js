@@ -8,6 +8,7 @@
 import _ from 'lodash'
 import { classes } from './classes'
 import { Prometey } from './Prometey'
+import { updateElement, createDOMElement, createDOMElements } from './DOM'
 // import {
 //   removePropFromElement,
 //   addPropsToElement,
@@ -47,6 +48,49 @@ const parseQuery = (queryString, classNames) => {
   }
 }
 
+const separateChilds = curProperties => {
+  let childs = []
+  let properties
+  let isPrimitive = false
+  // Проверяем свойства объекта, какой тип
+  // Если тип Array - значит это массив дочерних прометей объектов
+  if (_.isArray(curProperties)) {
+    childs = [...curProperties]
+  } else if (_.isObject(curProperties)) {
+    // если это объект, значит это просто свойства
+    if (!_.isEmpty(curProperties)) {
+      // проверяем наличие ключа childs
+      // если есть значит мы выносим детей в переменную childs
+      // для дальнейшей обработки
+      const propChilds = curProperties.childs
+      if (propChilds && propChilds.length) {
+        childs = [...propChilds]
+      }
+      // присваиваем свойства без ключей childs и class, так как эти свойства
+      // уже используются сами по себе в прометей объекте
+      // к примеру class уже есть у prometeyElement как свойство class
+      // childs также
+      properties = _.omit(curProperties, ['childs', 'class'])
+    }
+  } else {
+    // Любой примитив присваиваем просто так
+    properties = curProperties
+    isPrimitive = true
+  }
+
+  return { childs, properties, isPrimitive }
+}
+
+function PrometeyElement(query, properties, childIndex, PUID) {
+  return {
+    query,
+    ...parseQuery(query, _.get(properties, 'class')),
+    childIndex,
+    PUID,
+    ...separateChilds(properties),
+  }
+}
+
 /**
  * @name createPrometeyElement
  * @description Функция, которая парсит PrometeyObject и создает из него PrometeyElement
@@ -68,44 +112,14 @@ const createPrometeyElement = (
   PUID
 ) => {
   // Создаем объект со всей необходимой информацией
-  let prometeyElement = {
-    query,
-    ...parseQuery(query, _.get(properties, 'class')),
-    childIndex,
-    PUID,
-  }
-  let childs = []
-  // Проверяем свойства объекта, какой тип
-  // Если тип Array - значит это массив дочерних прометей объектов
-  if (_.isArray(properties)) {
-    childs = _.compact([...properties])
-    prometeyElement.properties = undefined
-  } else if (_.isObject(properties)) {
-    // если это объект, значит это просто свойства
-    if (_.isEmpty(properties)) {
-      prometeyElement.properties = undefined
-    } else {
-      // проверяем наличие ключа childs
-      // если есть значит мы выносим детей в переменную childs
-      // для дальнейшей обработки
-      const propChilds = properties.childs
-      if (propChilds && propChilds.length) {
-        childs = _.compact([...propChilds])
-      }
-      // присваиваем свойства без ключей childs и class, так как эти свойства
-      // уже используются сами по себе в прометей объекте
-      // к примеру class уже есть у prometeyElement как свойство class
-      // childs также
-      prometeyElement.properties = _.omit(properties, ['childs', 'class'])
-    }
-  } else {
-    // Любой примитив присваиваем просто так
-    prometeyElement.properties = properties
-    prometeyElement.isPrimitive = true
-  }
+  let prometeyElement = new PrometeyElement(query, properties, childIndex, PUID)
   // Рекурсивный вызов создания дочерних прометей объектов
-  if (childs.length) {
-    prometeyElement.childs = aggregatePrometeyObjectsTree(childs, PUID)
+  console.log('createPromeEl', PUID)
+  if (prometeyElement.childs.length) {
+    prometeyElement.childs = aggregatePrometeyObjectsTree(
+      prometeyElement.childs,
+      PUID
+    )
   }
   // Если этот прометей объект завязан с компонентом, то добавляем
   // необходимое свойство 'component' для дальнейшей обработки
@@ -476,6 +490,7 @@ export const generatePUID = (prometeyObject, childIndex, parentUID) => {
 export const aggregatePrometeyObjectsTree = (tree, parentUID) => {
   if (parentUID === undefined) {
     parentUID = convertStringToCharCodes('creator')
+    prometeyObjects[parentUID] = { isRoot: true }
   }
   if (_.isArray(tree)) {
     return _.map(tree, (prometeyObject, index) =>
@@ -501,6 +516,13 @@ const attachElementToPrometeyObject = (
   childIndex,
   parentUID
 ) => {
+  if (!prometeyObject) {
+    return {
+      isNegative: true,
+      childIndex,
+      query: prometeyObject,
+    }
+  }
   // let prometeyObjectWithElement = null
   if (prometeyObject.isComponent) {
     const PUID = generatePUID(prometeyObject.query, childIndex, parentUID)
@@ -516,8 +538,8 @@ const attachElementToPrometeyObject = (
         parentUID,
         PUID
       )
-      attachWatcherForComponentState(component, prometeyElement, parentUID)
       prometeyComponents[PUID] = prometeyElement
+      attachWatcherForComponentState(component, prometeyElement, parentUID)
       return prometeyElement
     }
   } else {
@@ -593,10 +615,68 @@ const updateComponent = (prometeyElement, component, parentUID) => {
     //   prometeyElement.childIndex,
     //   parentUID
     // )
-    updatePrometeyObject(prometeyElement, component.render())
+    updatePrometeyObject(prometeyElement, component.render(), parentUID)
     // console.log('updatedPrometeyObject', updatedPrometeyObject)
     // compareDels(dEl, newDel, component)
   }
 }
 
-const updatePrometeyObject = (prometeyElement, prometeyObject) => {}
+const findElementByPUID = PUID =>
+  prometeyObjects[PUID] || prometeyComponents[PUID]
+
+const updatePrometeyObject = (prometeyElement, prometeyObject, parentUID) => {
+  const { childs, properties, isPrimitive } = separateChilds(
+    prometeyObject.properties
+  )
+  console.log(
+    'prometeyElement',
+    prometeyElement,
+    'prometeyObject',
+    prometeyObject,
+    childs,
+    properties,
+    isPrimitive
+  )
+  if (prometeyElement.childs.length === childs.length) {
+    for (let x = 0; x < prometeyElement.childs.length; x++) {
+      const currentChild = prometeyElement.childs[x]
+      const newChild = childs[x]
+      if (currentChild.isNegative && !newChild.isNegative) {
+        // нужно добавить новый элемент
+        const updatedCurrentChild = (prometeyElement.childs[
+          x
+        ] = attachElementToPrometeyObject(
+          newChild,
+          currentChild.childIndex,
+          prometeyElement.PUID
+        ))
+        console.log('findElementByPUID', findElementByPUID(parentUID))
+        updatedCurrentChild.element = createDOMElement(updatedCurrentChild)
+        if (updatedCurrentChild.childs && updatedCurrentChild.childs.length) {
+          createDOMElements(updatedCurrentChild.childs)
+          _.forEach(updatedCurrentChild.childs, child => {
+            if (!child.isNegative) {
+              updatedCurrentChild.element.appendChild(child.element)
+            }
+          })
+        }
+      } else if (!currentChild.isNegative && newChild.isNegative) {
+        // нужно удалить старый элемент
+      } else {
+        // нужно обновить
+        updateElement(
+          currentChild.tag,
+          currentChild.element,
+          currentChild,
+          new PrometeyElement(
+            newChild.query,
+            newChild.properties,
+            currentChild.childIndex,
+            currentChild.PUID
+          )
+        )
+      }
+    }
+    // _.forEach(prometeyElement.childs, (currentChild, index) => {})
+  }
+}

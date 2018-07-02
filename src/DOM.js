@@ -6,15 +6,19 @@ export const createDOMElements = prometeyElements => {
     prometeyElement.element = createDOMElement(prometeyElement)
     if (prometeyElement.childs && prometeyElement.childs.length) {
       createDOMElements(prometeyElement.childs)
-      _.forEach(prometeyElement.childs, child =>
-        prometeyElement.element.appendChild(child.element)
-      )
+      _.forEach(prometeyElement.childs, child => {
+        if (!child.isNegative) {
+          prometeyElement.element.appendChild(child.element)
+        }
+      })
     }
   })
 }
 export const createDOMElement = prometeyElement => {
-  const { tag, id, parent, properties } = prometeyElement
-
+  const { tag, id, parent, properties, isNegative } = prometeyElement
+  if (isNegative) {
+    return null
+  }
   const element = document.createElement(tag)
   if (prometeyElement.class.length) {
     element.className = prometeyElement.class
@@ -46,7 +50,8 @@ export const updateElement = (
   prometeyElement,
   oldPrometeyElement
 ) => {
-  let props = prometeyElement && prometeyElement.properties
+  let props = prometeyElement.properties
+  const PUID = prometeyElement.PUID
   if (!oldPrometeyElement) {
     if (_.isObject(props)) {
       _.forEach(props, (value, name) => {
@@ -56,26 +61,27 @@ export const updateElement = (
       addPrimitiveToElement(tag, element, props, prometeyElement.PUID)
     }
   } else {
-    let newProps = oldPrometeyElement.props
+    let newProps = oldPrometeyElement.properties
     //   const noChilds = !_.get(oldPrometeyElement.childs, 'length')
 
     if (_.isObject(newProps)) {
       if (_.isEmpty(newProps) && _.isEmpty(props)) {
         return
       }
-      addPropsToElement(
-        element,
-        getOnlyNewProps(newProps, props),
-        oldPrometeyElement.uid
-      )
+      _.each(getOnlyNewProps(newProps, props), (value, name) => {
+        addPropertyToElement(tag, element, value, name, PUID)
+      })
+      //   addPropsToElement(
+      //     element,
+      //     getOnlyNewProps(newProps, props),
+      //     oldPrometeyElement.uid
+      //   )
       _.each(props, (prevPropValue, propName) => {
         const newPropValue = newProps[propName]
         if (_.isUndefined(newPropValue) || _.isNull(newPropValue)) {
-          props[propName] = removePropFromElement(
-            element,
-            prevPropValue,
-            propName
-          )
+          //   removePropFromElement(element, prevPropValue, propName)
+          addPropertyToElement(tag, element, null, name, null, true)
+          delete props[propName]
         } else {
           if (
             typeof newPropValue !== 'function' &&
@@ -119,7 +125,7 @@ const addPrimitiveToElement = (tag, element, value, PUID) => {
   }
   return value
 }
-const addPropertyToElement = (tag, element, value, name, PUID) => {
+const addPropertyToElement = (tag, element, value, name, PUID, isRemove) => {
   if (typeof name !== 'string') {
     console.error('Name of prop should have string type')
     name = `${name}`
@@ -127,15 +133,77 @@ const addPropertyToElement = (tag, element, value, name, PUID) => {
   if (typeof value === 'function') {
     element[name.toLowerCase()] = value
   } else {
-    if (!_.isUndefined(value)) {
+    if (isRemove || !_.isUndefined(value)) {
       if (name === 'value') {
-        addPrimitiveToElement(tag, element, value, PUID)
+        addPrimitiveToElement(tag, element, isRemove ? '' : value, PUID)
       } else {
         element.setAttribute(name, value)
       }
     }
   }
 }
+
+// const removePropertyFromElement = (tag, element, value, name) => {
+//   if (typeof name !== 'string') {
+//     console.error('Name of prop should have string type')
+//     name = `${name}`
+//   }
+//   if (typeof value === 'function') {
+//     element[name.toLowerCase()] = value
+//   } else {
+//     if (!_.isUndefined(value)) {
+//       if (name === 'value') {
+//         addPrimitiveToElement(tag, element, value)
+//       } else {
+//         element.setAttribute(name, value)
+//       }
+//     }
+//   }
+// }
+
+export const getOnlyNewProps = (newProps, prevProps) =>
+  prevProps
+    ? _.reduce(
+        newProps,
+        (obj, value, key) => {
+          if (prevProps[key] !== value) {
+            obj[key] = value
+          }
+          // if (_.isUndefined(prevProps[key]) || _.isNull(prevProps[key])) {
+          //   obj[key] = value
+          // }
+          return obj
+        },
+        {}
+      )
+    : newProps
+
+/*
+
+export const addPropsToElement = (element, props, uid) =>
+  _.each(props, (prop, propName) => {
+    if (typeof propName !== 'string') {
+      throw new Error('Name of prop should have string type')
+    }
+    if (typeof prop === 'function') {
+      console.log('ssss', propName, prop)
+      element[propName.toLowerCase()] = prop
+      // element.addEventListener(propName, prop)
+      // element.addEventListener(propName, prop)
+    } else {
+      if (!_.isUndefined(prop)) {
+        if (propName === 'value') {
+          console.log('ГОВНО ', prop)
+          element.innerHTML = `<!-- uid-${uid}-text --> ${prop} <!-- uid-${uid}-text -->`
+          // element.innerText = prop
+        } else {
+          element.setAttribute(propName, prop)
+        }
+      }
+    }
+  })
+
+*/
 // const addPropertyToElement = (prevPropValue, propName) => {
 //     const newPropValue = newProps[propName]
 //     if (_.isUndefined(newPropValue) || _.isNull(newPropValue)) {
