@@ -1,8 +1,8 @@
 import _ from 'lodash'
 
-export const Prometey = ({ query: Component, properties }) => {
-  let context = new Component(properties)
-  context.props = properties
+export const Prometey = ({ query: Component, props = {} }) => {
+  let context = new Component(props)
+  context.props = props
   context.__proto__.name = Component.name //eslint-disable-line
   context.setState = stateData => {
     const keys = Object.keys(stateData)

@@ -125,7 +125,14 @@ const addPrimitiveToElement = (tag, element, value, PUID) => {
   }
   return value
 }
-const addPropertyToElement = (tag, element, value, name, PUID, isRemove) => {
+export const addPropertyToElement = (
+  tag,
+  element,
+  value,
+  name,
+  PUID = 'puid',
+  isRemove
+) => {
   if (typeof name !== 'string') {
     console.error('Name of prop should have string type')
     name = `${name}`
