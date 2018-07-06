@@ -144,7 +144,11 @@ export const addPropertyToElement = (
       if (name === 'value') {
         addPrimitiveToElement(tag, element, isRemove ? '' : value, PUID)
       } else {
-        element.setAttribute(name, value)
+        if (isRemove) {
+          element.removeAttribute(name)
+        } else {
+          element.setAttribute(name, value)
+        }
       }
     }
   }

@@ -12,7 +12,6 @@ export { createTag } from './src/createTag'
 /* ---- short keywords ---- */
 export const tag = createTag
 export const create = createElement
-export const elem = createElement
 export const element = createElement
 /* ---- short keywords ---- */
 window.element = element

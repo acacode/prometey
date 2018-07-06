@@ -17,8 +17,8 @@ export const Prometey = ({ query: Component, props = {} }) => {
     }
     return shouldUpdate
   }
-  if (context.rerenderTimer === undefined) {
-    context.rerenderTimer = 10
+  if (context.rerenderTime === undefined) {
+    context.rerenderTime = 10
   }
   const rawRender = context.render.bind(context)
   context.render = () => rawRender()
