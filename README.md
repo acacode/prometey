@@ -1,5 +1,7 @@
 # Prometey
 
+# DEPRECATED.
+
 <img src="https://github.com/acacode/prometey/blob/master/logo_sketch.png?raw=true" width="250px" height="250px" />
 
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/acacode/prometey/blob/master/LICENSE)
